@@ -1,0 +1,170 @@
+local controller = peripheral.wrap("back")
+if not controller then
+    error("No peripheral found on the back.")
+end
+
+local modemSide = nil
+for _, side in ipairs(peripheral.getNames()) do
+    if peripheral.hasType(side, "modem") then
+        modemSide = side
+        break
+    end
+end
+
+if not modemSide then
+    error("No modem found.")
+end
+
+local modem = peripheral.wrap(modemSide)
+
+modem.open(500)
+
+local MIN_SPEED = 4
+local MAX_SPEED = 256
+local NUM_SPEEDS = 5
+
+local function buildSpeedLevels(minSpeed, maxSpeed, count)
+    local levels = {}
+    if count == 1 then
+        levels[1] = minSpeed
+        return levels
+    end
+    
+    for i = 0, count - 1 do
+        local t = i / (count - 1)
+        local value = math.floor(minSpeed + t * (maxSpeed - minSpeed) + 0.5)
+        levels[#levels + 1] = value
+    end
+    
+    return levels
+end
+
+local SPEED_LEVELS = buildSpeedLevels(MIN_SPEED, MAX_SPEED, NUM_SPEEDS)
+
+local function getClosestSpeedIndex(speed)
+    local bestIndex = 1
+    local bestDiff = math.huge
+    for i, value in ipairs(SPEED_LEVELS) do
+        local diff = math.abs(speed - value)
+        if diff < bestDiff then
+            bestDiff = diff
+            bestIndex = i
+        end
+    end
+    
+    return bestIndex
+end
+
+local function setSpeedByIndex(index)
+    if index < 1 then index = 1 end
+    if index > #SPEED_LEVELS then index = #SPEED_LEVELS end
+    local speed = SPEED_LEVELS[index]
+    controller.setTargetSpeed(speed)
+    print("Set speed to " .. speed .. " (level " .. index .. "/" .. #SPEED_LEVELS .. ")")
+end
+
+
+local function clamp(v, lo, hi)
+    if v < lo then return lo end
+    if v > hi then return hi end
+    return v
+end
+
+local function normalizeSpeed(v)
+    v = math.floor(tonumber(v) or 0)
+    v = clamp(v, MIN_SPEED, MAX_SPEED)
+    return highestPowerOfTwoAtMost(v)
+end
+
+local speaker = peripheral.find("speaker")
+
+local function playSoundUp(speedIndex)
+    if speaker then
+        speaker.playNote("bass", 3.0, math.floor(speedIndex / NUM_SPEEDS * 24))
+    end
+end
+
+local function playSoundDown(speedIndex)
+    if speaker then
+        speaker.playNote("bass", 3.0, math.floor(speedIndex / NUM_SPEEDS * 24))
+    end
+end
+
+local function speedUp()
+    local current = tonumber(controller.getTargetSpeed()) or MIN_SPEED
+    local index = getClosestSpeedIndex(current)
+    
+    playSoundUp(index)
+        
+    if index < #SPEED_LEVELS then
+        index = index + 1
+    end
+    
+    setSpeedByIndex(index)
+    print("Speeding Up: " .. index)
+end
+
+local function speedDown()
+   
+    local current = tonumber(controller.getTargetSpeed()) or MIN_SPEED
+    local index = getClosestSpeedIndex(current)
+    playSoundDown(index) 
+    if index > 1 then
+        index = index - 1
+    end
+    
+    setSpeedByIndex(index)
+    print("Speeding down: " .. index)
+end    
+
+
+
+-- Normalize whatever the controller currently has when the program starts
+setSpeedByIndex(getClosestSpeedIndex(tonumber(controller.getTargetSpeed()) or MIN_SPEED))
+
+print("Listening on modem side: " .. modemSide)
+print("Commands: Car.SpeedUp / Car.SpeedDown")
+
+local function toggleEngine()
+    local current = redstone.getOutput("back")
+    redstone.setOutput("back", not current)
+    print("Setting back output to: ")
+    print(current)
+end
+
+local lastLeft = false
+local lastRight = false
+local lastFront = false
+local lastBack = false
+local lastBottom = false
+
+local function checkInputs()
+    local leftOn = redstone.getInput("left")
+    local rightOn = redstone.getInput("right")
+    local frontOn = redstone.getInput("front")
+    local backOn = redstone.getInput("back")
+    local bottomOn = redstone.getInput("bottom")
+    
+    if leftOn and not lastLeft then
+        speedDown()
+    end
+    
+    if rightOn and not lastRight then
+        speedUp()
+    end
+    
+    if frontOn and not lastFront then
+       toggleEngine()
+    end
+    
+    lastLeft = leftOn
+    lastRight = rightOn
+    lastFront = frontOn
+    lastBack = backOn
+    lastBottom = bottomOn
+end
+
+while true do
+    os.pullEvent("redstone")
+    checkInputs()
+end
