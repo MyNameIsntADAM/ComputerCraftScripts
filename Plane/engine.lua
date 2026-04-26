@@ -4,15 +4,15 @@ local PROTOCOL = "adamco_universal_controller"
 local TICK_RATE = 0.05
 local THROTTLE_GAIN = 5
 local BRAKE_GAIN = 5
-local MAX_RPM = 64
-local MIN_RPM = 0
+local MAX_RPM = 256
+local MIN_RPM = -32
+local RPM_DIRECTION = -1;
 
 local ENABLED_COMMANDS = {
     rpm_delta = true,
     set_rpm = true,
-    toggle_engine = true,
+    toggle_engine = false,
     autopilot = false,
-    set_wheel_speed = true
 }
 
 local DEBUG = true
@@ -118,7 +118,6 @@ local function adjustTargetSpeed(delta)
 end
 
 local function ToggleEngine()
-    redstone.setOutput("front", not redstone.getOutput("front"))
     print("ToggleEngine called")
 end
 
@@ -218,8 +217,8 @@ local function listenForCommands()
                     end
 
                     if type(delta) == "number" then
-                        adjustTargetSpeed(delta)
-                        log("Applied RPM delta:", delta, "New target:", getTargetSpeed())
+                        adjustTargetSpeed(delta * RPM_DIRECTION)
+                        log("Applied RPM delta:", delta * RPM_DIRECTION, "New target:", getTargetSpeed())
                     end
 
                 elseif message.type == "set_rpm" then
@@ -230,8 +229,8 @@ local function listenForCommands()
                     end
 
                     if type(rpm) == "number" then
-                        setTargetSpeed(rpm)
-                        log("Set RPM:", rpm)
+                        setTargetSpeed(rpm * RPM_DIRECTION)
+                        log("Set RPM:", rpm * RPM_DIRECTION)
                     end
 
                 elseif message.type == "toggle_engine" then
