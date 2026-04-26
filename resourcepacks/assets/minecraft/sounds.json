@@ -1,0 +1,22 @@
+{
+  "custom.california_love": {
+    "sounds": [
+      { "name": "custom/california_love", "stream": true }
+    ]
+  },
+  "custom.free_bird": {
+    "sounds": [
+      { "name": "custom/free_bird", "stream": true }
+    ]
+  },
+  "custom.ride_of_the_valkyries": {
+    "sounds": [
+      { "name": "custom/ride_of_the_valkyries", "stream": true }
+    ]
+  },
+  "custom.tokyo_drift": {
+    "sounds": [
+      { "name": "custom/tokyo_drift", "stream": true }
+    ]
+  }
+}
