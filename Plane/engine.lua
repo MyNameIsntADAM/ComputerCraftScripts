@@ -2,16 +2,16 @@ local PORT = 14113
 local PROTOCOL = "adamco_universal_controller"
 
 local TICK_RATE = 0.05
-local THROTTLE_GAIN = 4
-local BRAKE_GAIN = 4
-local MAX_RPM = 32
+local THROTTLE_GAIN = 5
+local BRAKE_GAIN = 5
+local MAX_RPM = 256
 local MIN_RPM = -32
 local RPM_DIRECTION = -1;
 
 local ENABLED_COMMANDS = {
     rpm_delta = true,
     set_rpm = true,
-    toggle_engine = false,
+    toggle_engine = true,
     autopilot = false,
 }
 
@@ -118,6 +118,7 @@ local function adjustTargetSpeed(delta)
 end
 
 local function ToggleEngine()
+    redstone.setOutput("front", not redstone.getOutput("front"))
     print("ToggleEngine called")
 end
 
