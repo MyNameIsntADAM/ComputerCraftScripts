@@ -5,7 +5,7 @@ local TICK_RATE = 0.05
 local THROTTLE_GAIN = 5
 local BRAKE_GAIN = 5
 local MAX_RPM = 256
-local MIN_RPM = -32
+local MIN_RPM = 0
 local RPM_DIRECTION = 1;
 
 local ENABLED_COMMANDS = {
